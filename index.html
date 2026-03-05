@@ -159,17 +159,27 @@ select.ctrl-select {
     </div>
     <div class="stat-cell">
       <div class="stat-label">V1 Reject Rate</div>
-      <div class="stat-value red">0.47%</div>
-      <div class="stat-sub">stale + reject baseline</div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px">
+        <input id="v1RejectInput" type="number" value="0.47" min="0.01" max="10" step="0.01"
+          style="width:70px;background:transparent;border:none;border-bottom:1px solid var(--v1);color:var(--v1);font-family:var(--font);font-size:20px;font-weight:700;outline:none;padding:0"
+          oninput="readRejectRates();rebuildAll()">
+        <span style="color:var(--v1);font-size:14px;font-weight:700">%</span>
+      </div>
+      <div class="stat-sub">your actual V1 stale rate</div>
     </div>
     <div class="stat-cell">
       <div class="stat-label">V2 Reject Rate</div>
-      <div class="stat-value green">0.015%</div>
-      <div class="stat-sub">Luxor measured data</div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px">
+        <input id="v2RejectInput" type="number" value="0.0151" min="0.001" max="10" step="0.001"
+          style="width:70px;background:transparent;border:none;border-bottom:1px solid var(--v2);color:var(--v2);font-family:var(--font);font-size:20px;font-weight:700;outline:none;padding:0"
+          oninput="readRejectRates();rebuildAll()">
+        <span style="color:var(--v2);font-size:14px;font-weight:700">%</span>
+      </div>
+      <div class="stat-sub">your actual V2 stale rate</div>
     </div>
     <div class="stat-cell">
       <div class="stat-label">Efficiency Gain</div>
-      <div class="stat-value green">+0.455%</div>
+      <div class="stat-value green" id="s-gain">+0.4549%</div>
       <div class="stat-sub">more cycles earning revenue</div>
     </div>
   </div>
@@ -253,8 +263,19 @@ select.ctrl-select {
 
 <script>
 // ══ CONSTANTS ══════════════════════════════════════════
-const V1_REJECT    = 0.0047;
-const V2_REJECT    = 0.000151;
+let V1_REJECT = 0.0047;    // configurable via inputs
+let V2_REJECT = 0.000151;  // configurable via inputs
+
+function readRejectRates() {
+  const v1 = parseFloat(document.getElementById('v1RejectInput').value) / 100;
+  const v2 = parseFloat(document.getElementById('v2RejectInput').value) / 100;
+  if (!isNaN(v1) && v1 > 0 && v1 < 1) V1_REJECT = v1;
+  if (!isNaN(v2) && v2 > 0 && v2 < 1) V2_REJECT = v2;
+  // Update efficiency gain display
+  const gain = ((V1_REJECT - V2_REJECT) * 100).toFixed(4);
+  const el = document.getElementById('s-gain');
+  if (el) el.textContent = '+' + gain + '%';
+}
 const BLOCK_SUBSIDY = 3.125;
 
 const MINERS = [
@@ -513,6 +534,7 @@ function rebuildAll() {
 
 // ══ INIT ═══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', async () => {
+  readRejectRates();
   seedHistories();
   buildChart1();
   buildChart2();
