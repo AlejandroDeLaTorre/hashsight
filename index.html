@@ -1040,21 +1040,19 @@ function updateCharts() {
 // INIT
 // ════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', async () => {
-  // Render immediately with seed values
+  // Fetch live data BEFORE building charts so they render with real values in one shot
+  try {
+    await fetchLiveHashprice();
+  } catch (e) {
+    console.warn('[CycleScope] Live fetch failed, using seed values:', e.message);
+  }
+
+  // Build charts exactly once with whatever data we have
   recalc();
   buildTimeline();
   buildStacked();
   buildScatter();
   buildHalving();
-
-  // Fetch live data, then redraw everything with real hashprice
-  try {
-    await fetchLiveHashprice();
-    recalc();
-    updateCharts();
-  } catch (e) {
-    console.warn('[CycleScope] Live fetch failed, staying on seed values:', e.message);
-  }
 
   // Refresh every 90s
   setInterval(async () => {
