@@ -585,7 +585,7 @@ function recalc() {
   document.getElementById('s-cprice').textContent = '$' + m.usdPer1e15.toFixed(6);
   document.getElementById('s-sats').textContent = Math.round(m.satsPer1e12) + ' sats';
   buildEffMeters();
-  updateCharts();
+  // updateCharts called explicitly after recalc where needed
 }
 
 // ════════════════════════════════════════════
@@ -615,6 +615,7 @@ const CT = {
 // ════════════════════════════════════════════
 let timelineChart;
 function buildTimeline() {
+  if (timelineChart) { timelineChart.destroy(); timelineChart = null; }
   const ctx = document.getElementById('timelineChart').getContext('2d');
   const labels = HP30.map((_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (30 - i));
@@ -715,6 +716,7 @@ function buildTimeline() {
 // ════════════════════════════════════════════
 let stackedChart;
 function buildStacked() {
+  if (stackedChart) { stackedChart.destroy(); stackedChart = null; }
   const ctx = document.getElementById('stackedChart').getContext('2d');
   const n = 14;
   const labels = Array.from({length: n}, (_, i) => {
@@ -799,6 +801,7 @@ function buildStacked() {
 // ════════════════════════════════════════════
 let scatterChart;
 function buildScatter() {
+  if (scatterChart) { scatterChart.destroy(); scatterChart = null; }
   const ctx = document.getElementById('scatterChart').getContext('2d');
   const miner = MINERS[minerKey];
   const maxCycles = miner.hashrateTH;
@@ -874,6 +877,7 @@ function buildScatter() {
 // ════════════════════════════════════════════
 let halvingChart;
 function buildHalving() {
+  if (halvingChart) { halvingChart.destroy(); halvingChart = null; }
   const ctx = document.getElementById('halvingChart').getContext('2d');
   const miner = MINERS[minerKey];
   const n = HP18M.length;
