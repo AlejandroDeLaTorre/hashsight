@@ -516,35 +516,24 @@ let BTC_PRICE = 87420;   // updated by live fetch
 const BLOCK_SUBSIDY = 3.125;
 
 async function fetchLiveHashprice() {
-  const [priceRes, diffRes, blocksRes] = await Promise.allSettled([
-    fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', { signal: AbortSignal.timeout(8000) }).then(r => r.json()),
-    fetch('https://blockchain.info/q/getdifficulty', { signal: AbortSignal.timeout(8000) }).then(r => r.text()),
-    fetch('https://mempool.space/api/blocks', { signal: AbortSignal.timeout(8000) }).then(r => r.json()),
-  ]);
+  // Single call to our CORS proxy — /api/hashprice fetches all three
+  // upstream sources server-side (CoinGecko + blockchain.info + mempool.space)
+  const res = await fetch('/api/hashprice', { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`/api/hashprice returned ${res.status}`);
+  const data = await res.json();
 
-  const btcPrice   = priceRes.status  === 'fulfilled' ? (priceRes.value?.bitcoin?.usd  ?? BTC_PRICE)  : BTC_PRICE;
-  const difficulty = diffRes.status   === 'fulfilled' ? (parseFloat(diffRes.value) || 113.76e12)      : 113.76e12;
-  let   feeBTC     = 0;
-  if (blocksRes.status === 'fulfilled') {
-    const blks = blocksRes.value?.slice(0, 6) ?? [];
-    if (blks.length) feeBTC = blks.reduce((s, b) => s + (b?.extras?.totalFees ?? b?.fee ?? 0) / 1e8, 0) / blks.length;
-  }
+  HP_USD    = data.priceUSD;
+  BTC_PRICE = data.btcPrice;
 
-  const hp = (86400 * (BLOCK_SUBSIDY + feeBTC) * btcPrice * 1e12) / (difficulty * Math.pow(2, 32));
+  // Update stat bar
+  document.getElementById('s-hp').textContent = '$' + data.priceUSD.toFixed(5);
 
-  // Update globals so all chart functions pick up new values
-  HP_USD    = hp;
-  BTC_PRICE = btcPrice;
-
-  // Update stat bar hashprice display
-  document.getElementById('s-hp').textContent = '$' + hp.toFixed(5);
-
-  // Update status indicator if present
+  // Update status indicator
   const badge = document.querySelector('.logo-eyebrow');
   if (badge) badge.textContent = `SHA-256 Cycle Efficiency Analytics · Live · ${new Date().toLocaleTimeString()}`;
 
-  console.info('[CycleScope] Live fetch:', { btcPrice, difficulty: difficulty.toExponential(3), feeBTC: feeBTC.toFixed(5), hp: hp.toFixed(6) });
-  return hp;
+  console.info('[CycleScope] Live data via /api/hashprice:', data);
+  return data.priceUSD;
 }
 
 // ════════════════════════════════════════════
