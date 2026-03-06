@@ -17,9 +17,12 @@ jobs:
           curl -s -X GET https://stratumv2.com/api/snapshot \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 
+      - name: Check for difficulty adjustment and alert
+        run: |
+          curl -s -X GET https://stratumv2.com/api/difficulty-alert \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
       - name: Post hashprice update to Telegram
         run: |
           curl -s -X GET https://stratumv2.com/api/cron \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-
-
