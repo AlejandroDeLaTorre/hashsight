@@ -12,36 +12,33 @@ function esc(str) {
 }
 
 function fmtUSD(v) {
-  if (v >= 1e6) return '$' + (v / 1e6).toFixed(3) + 'M';
-  if (v >= 1e3) return '$' + (v / 1e3).toFixed(2) + 'k';
-  return '$' + v.toFixed(2);
+  const abs = Math.abs(v);
+  const sign = v >= 0 ? '' : '-';
+  if (abs >= 1e6) return sign + '$' + (abs / 1e6).toFixed(3) + 'M';
+  if (abs >= 1e3) return sign + '$' + (abs / 1e3).toFixed(2) + 'k';
+  return sign + '$' + abs.toFixed(2);
 }
 
-function profitabilityLine(name, wth, hp, powerCost) {
-  const rev    = hp;
-  const pwr    = wth / 1000 * 24 * powerCost;
-  const margin = rev * (1 - V2_REJECT) - pwr;
-  const pct    = ((margin / rev) * 100).toFixed(1);
-  if (margin > 0) return `✅ ${name}: \\+${esc(pct)}% margin`;
-  return `❌ ${name}: unprofitable at \\$${esc(String(powerCost))}/kWh`;
+function minerLine(name, wth, hashTH, hp, powerCost) {
+  const netPerTH      = hp * (1 - V2_REJECT) - (wth / 1000 * 24 * powerCost);
+  const netPerMachine = netPerTH * hashTH;
+  const v2Extra       = (V1_REJECT - V2_REJECT) * hp * hashTH; // extra earned vs V1
+  const status        = netPerMachine > 0 ? '✅' : '❌';
+  return `${status} ${name} \\(${hashTH}T\\): ${esc(fmtUSD(netPerMachine))}/day  💚 \\+${esc(fmtUSD(v2Extra))} vs V1`;
 }
 
 const MINERS = [
-  // Bitmain Hydro
-  { name: 'S21 XP\\+ Hyd',        wth: 11.0 },
-  { name: 'S21 XP Hyd',           wth: 12.0 },
-  { name: 'S21 Hydro',            wth: 16.0 },
-  // Bitmain Air
-  { name: 'S21 XP',               wth: 13.5 },
-  { name: 'S21 Pro',              wth: 15.0 },
-  { name: 'S19j Pro',             wth: 29.5 },
-  // Bitdeer SealMiner
-  { name: 'SealMiner A2 Pro Hyd', wth: 14.9 },
-  { name: 'SealMiner A2 Pro Air', wth: 14.9 },
-  // MicroBT
-  { name: 'M66S\\+\\+',           wth: 15.5 },
-  { name: 'M66S\\+',              wth: 17.0 },
-  { name: 'M63S Hydro',           wth: 18.5 },
+  { name: 'S21 XP+ Hyd',          wth: 11.0, hashTH: 500 },
+  { name: 'S21 XP Hyd',           wth: 12.0, hashTH: 473 },
+  { name: 'S21 Hydro',            wth: 16.0, hashTH: 335 },
+  { name: 'S21 XP',               wth: 13.5, hashTH: 270 },
+  { name: 'S21 Pro',              wth: 15.0, hashTH: 234 },
+  { name: 'S19j Pro',             wth: 29.5, hashTH: 104 },
+  { name: 'SealMiner A2 Pro Hyd', wth: 14.9, hashTH: 500 },
+  { name: 'SealMiner A2 Pro Air', wth: 14.9, hashTH: 265 },
+  { name: 'M66S++',               wth: 15.5, hashTH: 348 },
+  { name: 'M66S+',                wth: 17.0, hashTH: 318 },
+  { name: 'M63S Hydro',           wth: 18.5, hashTH: 390 },
 ];
 
 export default async function handler(req) {
@@ -59,16 +56,16 @@ export default async function handler(req) {
     return new Response(`Failed to fetch hashprice: ${e.message}`, { status: 500 });
   }
 
-  const PH      = 100;
-  const POWER   = 0.05;
-  const v1Cost  = hp.priceUSD * V1_REJECT * PH * 1000;
-  const v2Cost  = hp.priceUSD * V2_REJECT * PH * 1000;
-  const saving  = v1Cost - v2Cost;
-  const monthly = saving * 30;
-  const yearly  = saving * 365;
+  const POWER     = 0.05;
+  const hpPerPH   = hp.priceUSD * 1000;   // $/PH/day
+  const v1Cost100 = hp.priceUSD * V1_REJECT * 100 * 1000;
+  const v2Cost100 = hp.priceUSD * V2_REJECT * 100 * 1000;
+  const saving    = v1Cost100 - v2Cost100;
+  const monthly   = saving * 30;
+  const yearly    = saving * 365;
 
-  const profitLines = MINERS
-    .map(m => profitabilityLine(m.name, m.wth, hp.priceUSD, POWER))
+  const minerLines = MINERS
+    .map(m => minerLine(m.name, m.wth, m.hashTH, hp.priceUSD, POWER))
     .join('\n');
 
   const now = new Date().toUTCString().replace(/:\d{2} GMT/, ' UTC');
@@ -77,18 +74,19 @@ export default async function handler(req) {
     `⛏ *HASHPRICE UPDATE* — ${esc(now)}`,
     ``,
     `💰 *${esc('$' + hp.priceUSD.toFixed(6))}* / TH / day`,
+    `💰 *${esc('$' + hpPerPH.toFixed(4))}* / PH / day`,
     `₿ ${esc(hp.priceBTC.toFixed(10))} BTC / TH / day`,
     `📊 BTC: *${esc('$' + hp.btcPrice.toLocaleString())}*`,
     ``,
     `*V1 vs V2 @ 100 PH/s \\(\\$0\\.05/kWh\\)*`,
-    `  V1 stale cost: ${esc(fmtUSD(v1Cost))}/day`,
-    `  V2 stale cost: ${esc(fmtUSD(v2Cost))}/day`,
+    `  V1 stale cost: ${esc(fmtUSD(v1Cost100))}/day`,
+    `  V2 stale cost: ${esc(fmtUSD(v2Cost100))}/day`,
     `  💚 V2 saves: *${esc(fmtUSD(saving))}/day · ${esc(fmtUSD(monthly))}/mo · ${esc(fmtUSD(yearly))}/yr*`,
     ``,
-    `*Miner Profitability @ \\$0\\.05/kWh*`,
-    profitLines,
+    `*Per Machine @ \\$0\\.05/kWh — net profit + V2 upside*`,
+    minerLines,
     ``,
-    `📈 [stratumv2\\.com](https://stratumv2.com)`,
+    `📈 [stratumv2\.com](https://stratumv2.com)`,
   ].join('\n');
 
   const tgRes = await fetch(
