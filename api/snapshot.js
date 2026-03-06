@@ -7,8 +7,7 @@ async function sql(query, params = []) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Basic ${btoa(process.env.NEON_CREDENTIALS)}`,
-      'Neon-Connection-String': process.env.DATABASE_URL,
+      'Authorization': `Basic ${process.env.NEON_CREDENTIALS_B64}`,
     },
     body: JSON.stringify({ query, params }),
   });
