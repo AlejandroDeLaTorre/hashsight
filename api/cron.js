@@ -24,7 +24,7 @@ function minerLine(name, wth, hashTH, hp, powerCost) {
   const netPerMachine = netPerTH * hashTH;
   const v2Extra       = (V1_REJECT - V2_REJECT) * hp * hashTH; // extra earned vs V1
   const status        = netPerMachine > 0 ? '✅' : '❌';
-  return `${status} ${name} \\(${hashTH}T\\): ${esc(fmtUSD(netPerMachine))}/day  💚 \\+${esc(fmtUSD(v2Extra))} vs V1`;
+  return `${status} ${esc(name)} \\(${hashTH}T\\): ${esc(fmtUSD(netPerMachine))}/day  💚 \\+${esc(fmtUSD(v2Extra))} vs V1`;
 }
 
 const MINERS = [
