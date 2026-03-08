@@ -85,23 +85,28 @@ export default async function handler(req) {
     `📈 <a href="https://stratumv2.com">stratumv2.com</a>`,
   ].join('\n');
 
-  const tgRes = await fetch(
-    `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: CHANNEL_ID,
-        text: msg,
-        parse_mode: 'HTML',
-        disable_web_page_preview: false,
-      }),
-    }
-  );
+  async function postToChannel(chatId) {
+    const res = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: msg,
+          parse_mode: 'HTML',
+          disable_web_page_preview: false,
+        }),
+      }
+    );
+    return res.json();
+  }
 
-  const tgJson = await tgRes.json();
-  if (!tgJson.ok) {
-    return new Response(`Telegram error: ${JSON.stringify(tgJson)}`, { status: 500 });
+  const channels = [CHANNEL_ID, process.env.TELEGRAM_CHANNEL_ID_2].filter(Boolean);
+  const results = await Promise.all(channels.map(postToChannel));
+  const failed  = results.filter(r => !r.ok);
+  if (failed.length) {
+    return new Response(`Telegram error: ${JSON.stringify(failed)}`, { status: 500 });
   }
 
   return new Response(JSON.stringify({ ok: true, hashprice: hp.priceUSD, saved: saving }), {
