@@ -419,24 +419,22 @@ function buildChart1() {
   const hp     = histories[currentSpan] || genHistory(days, HP_USD);
   const labels = historiesLabels[currentSpan] || makeLabels(days);
 
-  const v1Cost = hp.map(h => staleCost(c1HP, h, V1_REJECT));
-  const v2Cost = hp.map(h => staleCost(c1HP, h, V2_REJECT));
-
   const gradHP = ctx.createLinearGradient(0, 0, 0, 220);
   gradHP.addColorStop(0, 'rgba(255,229,102,0.18)');
   gradHP.addColorStop(1, 'rgba(255,229,102,0)');
 
-  // Normalize hashprice to same scale as stale costs for visual comparison
-  const hpScaled = hp.map(h => staleCost(c1HP, h, 1.0)); // full revenue at scale
+  // Chart shows per-TH/day rates — slider updates stat boxes below, not chart lines
+  const v1PerTH = hp.map(h => h * V1_REJECT);
+  const v2PerTH = hp.map(h => h * V2_REJECT);
 
   chart1 = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Gross revenue', data: hpScaled, borderColor: '#ffe566', backgroundColor: gradHP, fill: true, borderWidth: 2, pointRadius: 0, tension: 0.4 },
-        { label: 'V1 daily stale cost', data: v1Cost, borderColor: '#ff5252', fill: false, borderWidth: 2, pointRadius: 0, tension: 0.4 },
-        { label: 'V2 daily stale cost', data: v2Cost, borderColor: 'rgba(0,229,160,0.55)', borderDash: [5,3], fill: false, borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
+        { label: 'Hashprice',          data: hp,       borderColor: '#ffe566', backgroundColor: gradHP, fill: true,  borderWidth: 2,   pointRadius: 0, tension: 0.4 },
+        { label: 'V1 stale cost/TH',   data: v1PerTH,  borderColor: '#ff5252', fill: false,             borderWidth: 2,   pointRadius: 0, tension: 0.4 },
+        { label: 'V2 stale cost/TH',   data: v2PerTH,  borderColor: 'rgba(0,229,160,0.55)', borderDash: [5,3], fill: false, borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
       ]
     },
     options: {
@@ -446,14 +444,16 @@ function buildChart1() {
         legend: { display: false },
         tooltip: { ...TT, callbacks: {
           label: c => {
-            if (c.datasetIndex === 0) return ` Gross revenue: ${fmtUSD(c.parsed.y)}/day`;
-            return ` ${c.dataset.label}: ${fmtUSD(c.parsed.y)}/day`;
+            const v = c.parsed.y;
+            if (c.datasetIndex === 0) return ` Hashprice: $${v.toFixed(6)}/TH/day`;
+            if (c.datasetIndex === 1) return ` V1 stale: $${v.toFixed(6)}/TH/day`;
+            return ` V2 stale: $${v.toFixed(6)}/TH/day`;
           }
         }}
       },
       scales: {
         x: { grid: xG, ticks: xT },
-        y: { position: 'left', grid: yG, ticks: { ...yT, callback: v => fmtUSD(v) } },
+        y: { position: 'left', grid: yG, ticks: { ...yT, callback: v => '$' + v.toFixed(4) } },
       }
     }
   });
