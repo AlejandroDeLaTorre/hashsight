@@ -234,6 +234,9 @@ select.ctrl-select {
       <div>
         <div class="card-title">Chart 1 · Live Hashprice vs Your V1 Stale Cost</div>
         <div class="card-subtitle">What the market pays — and what stales are costing you daily at your scale</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;max-width:620px;line-height:1.6">
+          The <span style="color:#B45309;font-weight:600">red area</span> is real money lost every day to stale shares on a V1 pool. The <span style="color:#059669;font-weight:600">green area</span> is what you'd lose on V2 — a fraction of that. Move the slider to your actual hashrate to see your daily bleed.
+        </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <div class="badge bgold" id="c1-badge">@ 100 PH/s</div>
@@ -268,6 +271,9 @@ select.ctrl-select {
       <div>
         <div class="card-title">Chart 2 · Cumulative Revenue Left on the Table</div>
         <div class="card-subtitle">Total USD lost by staying on V1 — compounding every day</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;max-width:620px;line-height:1.6">
+          Every day on V1 is another day added to the stack. The <span style="color:#059669;font-weight:600">green gap</span> between the two lines is cumulative savings from switching to V2. The <span style="color:#94A3B8;font-weight:600">dotted section</span> projects 90 days forward at today's hashprice.
+        </div>
       </div>
       <div class="badge bred" id="c2-badge">@ 100 PH/s</div>
     </div>
