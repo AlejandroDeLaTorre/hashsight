@@ -14,78 +14,96 @@
 <meta name="twitter:title" content="Stratum V2 — Does it save you money?">
 <meta name="twitter:description" content="Live hashprice, V1 vs V2 stale cost calculator, and per-machine profitability for every major ASIC.">
 <meta name="twitter:site" content="@stratumv2">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #080b10;
-  --surface: #0d1117;
-  --panel: #111820;
-  --border: #1c2535;
-  --border2: #243040;
-  --hp: #ffe566;
-  --v1: #ff5252;
-  --v2: #00e5a0;
-  --text: #cdd9e8;
-  --muted: #4a6080;
-  --font: 'IBM Plex Mono', monospace;
-  --display: 'Bebas Neue', sans-serif;
+  --bg:      #F0F2F5;
+  --surface: #FFFFFF;
+  --panel:   #FFFFFF;
+  --border:  #E2E8F0;
+  --border2: #CBD5E1;
+  --hp:      #B45309;
+  --v1:      #DC2626;
+  --v2:      #059669;
+  --text:    #0F172A;
+  --muted:   #64748B;
+  --font:    'IBM Plex Mono', monospace;
+  --display: 'DM Serif Display', serif;
+  --shadow:  0 1px 3px rgba(15,23,42,0.07), 0 4px 16px rgba(15,23,42,0.05);
+  --shadow-hover: 0 4px 12px rgba(15,23,42,0.1), 0 8px 28px rgba(15,23,42,0.07);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
-body::before {
-  content: ''; position: fixed; inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
-  pointer-events: none; z-index: 0;
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
-.wrap { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 0 20px 48px; }
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #B45309, #059669 60%, #2563EB);
+  z-index: 100;
+}
+.wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px 64px; }
 
 /* HEADER */
 .header {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  padding: 24px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 24px;
-  flex-wrap: wrap; gap: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 28px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
+  flex-wrap: wrap; gap: 14px;
 }
-.logo-eyebrow { font-size: 9px; letter-spacing: 4px; color: var(--muted); margin-bottom: 4px; }
-.logo-title { font-family: var(--display); font-size: 44px; letter-spacing: 3px; line-height: 1; color: var(--text); }
+.logo-eyebrow { font-size: 9px; letter-spacing: 3px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+.logo-title {
+  font-family: var(--display); font-size: 42px; letter-spacing: 1px; line-height: 1;
+  color: var(--text); font-weight: 400;
+}
 .logo-title span { color: var(--v2); }
 .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .live-pill {
   display: flex; align-items: center; gap: 6px;
-  background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.2);
-  padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; color: var(--v2); letter-spacing: 1.5px;
+  background: #ECFDF5; border: 1px solid #A7F3D0;
+  padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: 700;
+  color: var(--v2); letter-spacing: 1.5px;
 }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--v2); animation: blink 1.5s ease-in-out infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 /* STAT BAR */
 .stat-bar {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
-  background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 12px; margin-bottom: 28px;
 }
-.stat-cell { background: var(--panel); padding: 14px 18px; transition: background 0.2s; }
-.stat-cell:hover { background: var(--surface); }
-.stat-label { font-size: 8px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 7px; }
+.stat-cell {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 20px;
+  box-shadow: var(--shadow); transition: box-shadow 0.2s;
+}
+.stat-cell:hover { box-shadow: var(--shadow-hover); }
+.stat-label { font-size: 8px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
 .stat-value { font-size: 20px; font-weight: 700; line-height: 1; }
 .gold { color: var(--hp); } .green { color: var(--v2); } .red { color: var(--v1); }
-.stat-sub { font-size: 9px; color: var(--muted); margin-top: 4px; }
+.stat-sub { font-size: 9px; color: var(--muted); margin-top: 5px; }
 
 /* CARDS */
 .card {
   background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-  padding: 22px; position: relative; overflow: hidden; margin-bottom: 20px;
+  padding: 24px; position: relative; overflow: hidden; margin-bottom: 20px;
+  box-shadow: var(--shadow);
 }
-.card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; }
-.card.cgold::after { background: linear-gradient(90deg, transparent, var(--hp) 40%, transparent); }
-.card.cgreen::after { background: linear-gradient(90deg, transparent, var(--v2) 40%, transparent); }
-.card.cred::after   { background: linear-gradient(90deg, transparent, var(--v1) 40%, transparent); }
-.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
-.card-title { font-size: 9px; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-.card-subtitle { font-size: 14px; font-weight: 600; color: var(--text); }
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; }
+.card.cgold::before { background: var(--hp); }
+.card.cgreen::before { background: var(--v2); }
+.card.cred::before   { background: var(--v1); }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+.card-title { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
+.card-subtitle { font-size: 15px; font-weight: 600; color: var(--text); }
 .badge { font-size: 9px; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; font-weight: 700; white-space: nowrap; border: none; cursor: default; }
-.badge.bgold  { background: rgba(255,229,102,0.1); color: var(--hp);  border: 1px solid rgba(255,229,102,0.2); }
-.badge.bgreen { background: rgba(0,229,160,0.1);   color: var(--v2); border: 1px solid rgba(0,229,160,0.2); }
-.badge.bred   { background: rgba(255,82,82,0.1);   color: var(--v1); border: 1px solid rgba(255,82,82,0.2); }
+.badge.bgold  { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.badge.bgreen { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+.badge.bred   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
 
 /* CONTROLS */
 .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -94,42 +112,47 @@ body::before {
 input[type=range] { accent-color: var(--v2); cursor: pointer; flex: 1; min-width: 100px; }
 select.ctrl-select {
   background: var(--surface); border: 1px solid var(--border2); border-radius: 6px;
-  padding: 6px 10px; color: var(--text); font-family: var(--font); font-size: 11px; cursor: pointer; outline: none;
+  padding: 6px 10px; color: var(--text); font-family: var(--font); font-size: 11px;
+  cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 /* SUMMARY */
-.summary-row { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 14px; }
-.sum-label { font-size: 8px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-.sum-value { font-size: 22px; font-weight: 700; line-height: 1; }
+.summary-row { display: flex; gap: 32px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.sum-label { font-size: 8px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
+.sum-value { font-size: 24px; font-weight: 700; line-height: 1; }
 
 /* LEGEND */
-.legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 9px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
 .leg-line { width: 20px; height: 2px; border-radius: 1px; flex-shrink: 0; }
 
 /* BREAK-EVEN GRID */
 .be-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 4px; }
-.be-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; transition: border-color 0.2s; }
-.be-card:hover { border-color: var(--border2); }
+.be-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.be-card:hover { border-color: var(--border2); box-shadow: var(--shadow-hover); transform: translateY(-1px); }
 .be-miner { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
 .be-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; }
 .be-key { color: var(--muted); }
-.be-val { font-weight: 600; }
-.be-bar-bg { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.be-val { font-weight: 600; color: var(--text); }
+.be-bar-bg { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
 .be-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
 .be-status { font-size: 9px; font-weight: 700; letter-spacing: 1px; margin-top: 7px; }
 
 /* SPAN BUTTONS */
 .span-btns { display: flex; gap: 4px; }
 .span-btn {
-  padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  cursor: pointer; font-family: var(--font); border: 1px solid rgba(255,229,102,0.2);
-  background: rgba(255,229,102,0.1); color: var(--hp); transition: opacity 0.2s;
+  padding: 4px 12px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; font-family: var(--font); border: 1px solid var(--border2);
+  background: var(--surface); color: var(--muted); transition: all 0.15s;
 }
-.span-btn.dim { opacity: 0.4; }
+.span-btn:not(.dim) { background: #0F172A; color: #fff; border-color: #0F172A; }
+.span-btn.dim:hover { background: var(--border); }
 
 @media (max-width: 900px) { .stat-bar { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 600px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } .logo-title { font-size: 32px; } }
+@media (max-width: 600px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } .logo-title { font-size: 30px; } }
 </style>
 </head>
 <body>
@@ -143,15 +166,16 @@ select.ctrl-select {
     </div>
     <div class="header-right">
       <button id="shareBtn" onclick="buildShareURL()" style="
-        background:rgba(255,255,255,0.05);border:1px solid var(--border);
-        padding:6px 12px;border-radius:20px;cursor:pointer;
+        background:#fff;border:1px solid var(--border2);
+        padding:6px 14px;border-radius:20px;cursor:pointer;
         font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;
-        font-family:var(--font);white-space:nowrap;transition:all 0.2s"
-        onmouseover="this.style.borderColor='var(--border2)';this.style.color='#fff'"
-        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        font-family:var(--font);white-space:nowrap;transition:all 0.2s;
+        box-shadow:0 1px 3px rgba(0,0,0,0.06)"
+        onmouseover="this.style.background='#0F172A';this.style.color='#fff';this.style.borderColor='#0F172A'"
+        onmouseout="this.style.background='#fff';this.style.color='var(--muted)';this.style.borderColor='var(--border2)'">
         SHARE
       </button>
-      <a href="https://t.me/sv2profitability" target="_blank" style="display:flex;align-items:center;gap:7px;background:rgba(41,182,246,0.1);border:1px solid rgba(41,182,246,0.25);padding:6px 12px;border-radius:20px;text-decoration:none;font-size:10px;font-weight:700;color:#29b6f6;letter-spacing:1.5px;font-family:var(--font);white-space:nowrap;transition:background 0.2s" onmouseover="this.style.background='rgba(41,182,246,0.18)'" onmouseout="this.style.background='rgba(41,182,246,0.1)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="#29b6f6"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>DAILY SIGNALS</a>
+      <a href="https://t.me/sv2profitability" target="_blank" style="display:flex;align-items:center;gap:7px;background:#EFF6FF;border:1px solid #BFDBFE;padding:6px 12px;border-radius:20px;text-decoration:none;font-size:10px;font-weight:700;color:#2563EB;letter-spacing:1.5px;font-family:var(--font);white-space:nowrap;transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.06)" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>DAILY SIGNALS</a>
       <div class="live-pill"><div class="live-dot"></div><span id="liveStatus">LOADING</span></div>
       <select class="ctrl-select" id="powerCostSelect" onchange="rebuildAll()">
         <option value="0.03">$0.03 / kWh</option>
@@ -181,7 +205,7 @@ select.ctrl-select {
       <div class="stat-label">V1 Reject Rate</div>
       <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px">
         <input id="v1RejectInput" type="number" value="0.47" min="0.01" max="10" step="0.01"
-          style="width:70px;background:transparent;border:none;border-bottom:1px solid var(--v1);color:var(--v1);font-family:var(--font);font-size:20px;font-weight:700;outline:none;padding:0"
+          style="width:70px;background:transparent;border:none;border-bottom:2px solid var(--v1);color:var(--v1);font-family:var(--font);font-size:20px;font-weight:700;outline:none;padding:0"
           oninput="readRejectRates();rebuildAll()">
         <span style="color:var(--v1);font-size:14px;font-weight:700">%</span>
       </div>
@@ -191,7 +215,7 @@ select.ctrl-select {
       <div class="stat-label">V2 Reject Rate</div>
       <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px">
         <input id="v2RejectInput" type="number" value="0.0151" min="0.001" max="10" step="0.001"
-          style="width:70px;background:transparent;border:none;border-bottom:1px solid var(--v2);color:var(--v2);font-family:var(--font);font-size:20px;font-weight:700;outline:none;padding:0"
+          style="width:70px;background:transparent;border:none;border-bottom:2px solid var(--v2);color:var(--v2);font-family:var(--font);font-size:20px;font-weight:700;outline:none;padding:0"
           oninput="readRejectRates();rebuildAll()">
         <span style="color:var(--v2);font-size:14px;font-weight:700">%</span>
       </div>
@@ -232,9 +256,9 @@ select.ctrl-select {
       <div><div class="sum-label">V2 Saves / Day</div><div class="sum-value green" id="c1-recovery">—</div></div>
     </div>
     <div class="legend">
-      <div class="legend-item"><div class="leg-line" style="background:var(--hp)"></div>Hashprice USD/TH/day</div>
-      <div class="legend-item"><div class="leg-line" style="background:var(--v1)"></div>Your daily V1 stale cost</div>
-      <div class="legend-item"><div class="leg-line" style="background:var(--v2);opacity:0.6"></div>Your daily V2 stale cost</div>
+      <div class="legend-item"><div class="leg-line" style="background:#B45309"></div>Hashprice USD/TH/day</div>
+      <div class="legend-item"><div class="leg-line" style="background:#DC2626"></div>Your daily V1 stale cost</div>
+      <div class="legend-item"><div class="leg-line" style="background:#059669;opacity:0.7"></div>Your daily V2 stale cost</div>
     </div>
   </div>
 
@@ -259,8 +283,8 @@ select.ctrl-select {
       <div><div class="sum-label">V2 Saves / Day</div><div class="sum-value green" id="c2-daily">—</div></div>
     </div>
     <div class="legend">
-      <div class="legend-item"><div class="leg-line" style="background:var(--v1)"></div>Cumulative stale cost on V1</div>
-      <div class="legend-item"><div class="leg-line" style="background:var(--v2)"></div>Cumulative stale cost on V2 (gap = savings)</div>
+      <div class="legend-item"><div class="leg-line" style="background:#DC2626"></div>Cumulative stale cost on V1</div>
+      <div class="legend-item"><div class="leg-line" style="background:#059669"></div>Cumulative stale cost on V2 (gap = savings)</div>
     </div>
   </div>
 
@@ -401,15 +425,16 @@ async function fetchHistory() {
 
 // ══ CHART THEME ════════════════════════════════════════
 const TT = {
-  backgroundColor: '#0d1117', borderColor: '#243040', borderWidth: 1,
-  titleColor: '#ffe566', bodyColor: '#cdd9e8',
+  backgroundColor: '#ffffff', borderColor: '#E2E8F0', borderWidth: 1,
+  titleColor: '#0F172A', bodyColor: '#475569',
   titleFont: { family: 'IBM Plex Mono', size: 10, weight: '700' },
-  bodyFont:  { family: 'IBM Plex Mono', size: 10 }, padding: 10,
+  bodyFont:  { family: 'IBM Plex Mono', size: 10 }, padding: 12,
+  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
 };
-const xG = { color: 'rgba(28,37,53,0.8)' };
-const yG = { color: 'rgba(28,37,53,0.8)' };
-const xT = { color: '#4a6080', font: { family: 'IBM Plex Mono', size: 8 }, maxTicksLimit: 8 };
-const yT = { color: '#4a6080', font: { family: 'IBM Plex Mono', size: 9 } };
+const xG = { color: 'rgba(226,232,240,0.8)' };
+const yG = { color: 'rgba(226,232,240,0.8)' };
+const xT = { color: '#94A3B8', font: { family: 'IBM Plex Mono', size: 8 }, maxTicksLimit: 8 };
+const yT = { color: '#94A3B8', font: { family: 'IBM Plex Mono', size: 9 } };
 
 // ══ CHART 1 ════════════════════════════════════════════
 function buildChart1() {
@@ -420,8 +445,8 @@ function buildChart1() {
   const labels = historiesLabels[currentSpan] || makeLabels(days);
 
   const gradHP = ctx.createLinearGradient(0, 0, 0, 220);
-  gradHP.addColorStop(0, 'rgba(255,229,102,0.18)');
-  gradHP.addColorStop(1, 'rgba(255,229,102,0)');
+  gradHP.addColorStop(0, 'rgba(180,83,9,0.08)');
+  gradHP.addColorStop(1, 'rgba(180,83,9,0)');
 
   // Chart shows daily stale costs at YOUR scale — slider makes this change dramatically
   const v1Cost = hp.map(h => staleCost(c1HP, h, V1_REJECT));
@@ -429,11 +454,11 @@ function buildChart1() {
   const saving = v1Cost.map((v, i) => v - v2Cost[i]);
 
   const gradV1 = ctx.createLinearGradient(0, 0, 0, 220);
-  gradV1.addColorStop(0, 'rgba(255,82,82,0.25)');
+  gradV1.addColorStop(0, 'rgba(220,38,38,0.12)');
   gradV1.addColorStop(1, 'rgba(255,82,82,0)');
 
   const gradSave = ctx.createLinearGradient(0, 0, 0, 220);
-  gradSave.addColorStop(0, 'rgba(0,229,160,0.18)');
+  gradSave.addColorStop(0, 'rgba(5,150,105,0.12)');
   gradSave.addColorStop(1, 'rgba(0,229,160,0)');
 
   chart1 = new Chart(ctx, {
@@ -441,8 +466,8 @@ function buildChart1() {
     data: {
       labels,
       datasets: [
-        { label: 'V1 stale cost/day',  data: v1Cost, borderColor: '#ff5252', backgroundColor: gradV1, fill: true,  borderWidth: 2,   pointRadius: 0, tension: 0.4 },
-        { label: 'V2 stale cost/day',  data: v2Cost, borderColor: 'rgba(0,229,160,0.9)', backgroundColor: gradSave, fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
+        { label: 'V1 stale cost/day',  data: v1Cost, borderColor: '#DC2626', backgroundColor: gradV1, fill: true,  borderWidth: 2,   pointRadius: 0, tension: 0.4 },
+        { label: 'V2 stale cost/day',  data: v2Cost, borderColor: '#059669', backgroundColor: gradSave, fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
       ]
     },
     options: {
@@ -522,11 +547,11 @@ function buildChart2() {
 
   // Gradient for the savings gap fill
   const gradGap = ctx.createLinearGradient(0, 0, 0, 220);
-  gradGap.addColorStop(0, 'rgba(0,229,160,0.22)');
-  gradGap.addColorStop(1, 'rgba(0,229,160,0.04)');
+  gradGap.addColorStop(0, 'rgba(5,150,105,0.15)');
+  gradGap.addColorStop(1, 'rgba(5,150,105,0.02)');
 
   const gradV1 = ctx.createLinearGradient(0, 0, 0, 220);
-  gradV1.addColorStop(0, 'rgba(255,82,82,0.10)');
+  gradV1.addColorStop(0, 'rgba(220,38,38,0.08)');
   gradV1.addColorStop(1, 'rgba(255,82,82,0)');
 
   chart2 = new Chart(ctx, {
@@ -538,7 +563,7 @@ function buildChart2() {
         {
           label: 'V1 cumulative loss',
           data: fullCumV1,
-          borderColor: '#ff5252',
+          borderColor: '#DC2626',
           backgroundColor: gradV1,
           fill: true,
           borderWidth: 2,
@@ -550,7 +575,7 @@ function buildChart2() {
         {
           label: 'V2 cumulative loss',
           data: fullCumV2,
-          borderColor: '#00e5a0',
+          borderColor: '#059669',
           backgroundColor: gradGap,
           fill: '-1',         // fill to V1 dataset above = green savings gap
           borderWidth: 1.5,
