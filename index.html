@@ -426,14 +426,17 @@ function buildChart1() {
   gradHP.addColorStop(0, 'rgba(255,229,102,0.18)');
   gradHP.addColorStop(1, 'rgba(255,229,102,0)');
 
+  // Normalize hashprice to same scale as stale costs for visual comparison
+  const hpScaled = hp.map(h => staleCost(c1HP, h, 1.0)); // full revenue at scale
+
   chart1 = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Hashprice', data: hp, borderColor: '#ffe566', backgroundColor: gradHP, fill: true, borderWidth: 2, pointRadius: 0, tension: 0.4, yAxisID: 'yHP' },
-        { label: 'V1 daily stale cost', data: v1Cost, borderColor: '#ff5252', fill: false, borderWidth: 2, pointRadius: 0, tension: 0.4, yAxisID: 'yCost' },
-        { label: 'V2 daily stale cost', data: v2Cost, borderColor: 'rgba(0,229,160,0.55)', borderDash: [5,3], fill: false, borderWidth: 1.5, pointRadius: 0, tension: 0.4, yAxisID: 'yCost' },
+        { label: 'Gross revenue', data: hpScaled, borderColor: '#ffe566', backgroundColor: gradHP, fill: true, borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'V1 daily stale cost', data: v1Cost, borderColor: '#ff5252', fill: false, borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'V2 daily stale cost', data: v2Cost, borderColor: 'rgba(0,229,160,0.55)', borderDash: [5,3], fill: false, borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
       ]
     },
     options: {
@@ -442,15 +445,15 @@ function buildChart1() {
       plugins: {
         legend: { display: false },
         tooltip: { ...TT, callbacks: {
-          label: c => c.datasetIndex === 0
-            ? ` Hashprice: $${c.parsed.y.toFixed(6)}/TH/d`
-            : ` ${c.dataset.label}: ${fmtUSD(c.parsed.y)}`
+          label: c => {
+            if (c.datasetIndex === 0) return ` Gross revenue: ${fmtUSD(c.parsed.y)}/day`;
+            return ` ${c.dataset.label}: ${fmtUSD(c.parsed.y)}/day`;
+          }
         }}
       },
       scales: {
         x: { grid: xG, ticks: xT },
-        yHP:   { position: 'left',  grid: yG, ticks: { ...yT, callback: v => '$'+v.toFixed(4) } },
-        yCost: { position: 'right', grid: { display: false }, ticks: { ...yT, callback: v => fmtUSD(v) } }
+        y: { position: 'left', grid: yG, ticks: { ...yT, callback: v => fmtUSD(v) } },
       }
     }
   });
