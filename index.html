@@ -423,18 +423,26 @@ function buildChart1() {
   gradHP.addColorStop(0, 'rgba(255,229,102,0.18)');
   gradHP.addColorStop(1, 'rgba(255,229,102,0)');
 
-  // Chart shows per-TH/day rates — slider updates stat boxes below, not chart lines
-  const v1PerTH = hp.map(h => h * V1_REJECT);
-  const v2PerTH = hp.map(h => h * V2_REJECT);
+  // Chart shows daily stale costs at YOUR scale — slider makes this change dramatically
+  const v1Cost = hp.map(h => staleCost(c1HP, h, V1_REJECT));
+  const v2Cost = hp.map(h => staleCost(c1HP, h, V2_REJECT));
+  const saving = v1Cost.map((v, i) => v - v2Cost[i]);
+
+  const gradV1 = ctx.createLinearGradient(0, 0, 0, 220);
+  gradV1.addColorStop(0, 'rgba(255,82,82,0.25)');
+  gradV1.addColorStop(1, 'rgba(255,82,82,0)');
+
+  const gradSave = ctx.createLinearGradient(0, 0, 0, 220);
+  gradSave.addColorStop(0, 'rgba(0,229,160,0.18)');
+  gradSave.addColorStop(1, 'rgba(0,229,160,0)');
 
   chart1 = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Hashprice',          data: hp,       borderColor: '#ffe566', backgroundColor: gradHP, fill: true,  borderWidth: 2,   pointRadius: 0, tension: 0.4 },
-        { label: 'V1 stale cost/TH',   data: v1PerTH,  borderColor: '#ff5252', fill: false,             borderWidth: 2,   pointRadius: 0, tension: 0.4 },
-        { label: 'V2 stale cost/TH',   data: v2PerTH,  borderColor: 'rgba(0,229,160,0.55)', borderDash: [5,3], fill: false, borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
+        { label: 'V1 stale cost/day',  data: v1Cost, borderColor: '#ff5252', backgroundColor: gradV1, fill: true,  borderWidth: 2,   pointRadius: 0, tension: 0.4 },
+        { label: 'V2 stale cost/day',  data: v2Cost, borderColor: 'rgba(0,229,160,0.9)', backgroundColor: gradSave, fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.4 },
       ]
     },
     options: {
@@ -445,15 +453,15 @@ function buildChart1() {
         tooltip: { ...TT, callbacks: {
           label: c => {
             const v = c.parsed.y;
-            if (c.datasetIndex === 0) return ` Hashprice: $${v.toFixed(6)}/TH/day`;
-            if (c.datasetIndex === 1) return ` V1 stale: $${v.toFixed(6)}/TH/day`;
-            return ` V2 stale: $${v.toFixed(6)}/TH/day`;
+            const saved = v1Cost[c.dataIndex] - v2Cost[c.dataIndex];
+            if (c.datasetIndex === 0) return ` V1 stale loss: ${fmtUSD(v)}/day  (V2 saves ${fmtUSD(saved)})`;
+            return ` V2 stale loss: ${fmtUSD(v)}/day`;
           }
         }}
       },
       scales: {
         x: { grid: xG, ticks: xT },
-        y: { position: 'left', grid: yG, ticks: { ...yT, callback: v => '$' + v.toFixed(4) } },
+        y: { position: 'left', grid: yG, ticks: { ...yT, callback: v => fmtUSD(v) } },
       }
     }
   });
@@ -480,32 +488,85 @@ function buildChart2() {
   if (chart2) { chart2.destroy(); chart2 = null; }
   const ctx    = document.getElementById('chart2').getContext('2d');
   const days   = 90;
-  const saving = dailySaving(c2HP, HP_USD);
 
-  const labels   = Array.from({length: days}, (_, i) => {
+  const labels  = Array.from({length: days}, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (days - 1 - i));
     return i % 15 === 0 ? d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
   });
-  const dailyV1 = staleCost(c2HP, HP_USD, V1_REJECT);
-  const dailyV2 = staleCost(c2HP, HP_USD, V2_REJECT);
-  const cumV1   = Array.from({length: days}, (_, i) => +(dailyV1 * (i + 1)).toFixed(2));
-  const cumV2   = Array.from({length: days}, (_, i) => +(dailyV2 * (i + 1)).toFixed(2));
 
-  const gradL = ctx.createLinearGradient(0, 0, 0, 200);
-  gradL.addColorStop(0, 'rgba(255,82,82,0.2)');
-  gradL.addColorStop(1, 'rgba(255,82,82,0)');
+  const dailyV1  = staleCost(c2HP, HP_USD, V1_REJECT);
+  const dailyV2  = staleCost(c2HP, HP_USD, V2_REJECT);
+  const dailySav = dailyV1 - dailyV2;
 
-  const gradV2 = ctx.createLinearGradient(0, 0, 0, 200);
-  gradV2.addColorStop(0, 'rgba(0,229,160,0.12)');
-  gradV2.addColorStop(1, 'rgba(0,229,160,0)');
+  const cumV1  = Array.from({length: days}, (_, i) => +(dailyV1  * (i + 1)).toFixed(2));
+  const cumV2  = Array.from({length: days}, (_, i) => +(dailyV2  * (i + 1)).toFixed(2));
+  const cumSav = Array.from({length: days}, (_, i) => +(dailySav * (i + 1)).toFixed(2));
+
+  // Projection: extend savings 90 more days as dotted line
+  const projLabels = Array.from({length: days * 2}, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (days - 1 - i));
+    return i % 15 === 0 ? d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
+  });
+  const projSav = Array.from({length: days * 2}, (_, i) =>
+    i < days ? null : +(dailySav * (i + 1)).toFixed(2)
+  );
+  const projV1 = Array.from({length: days * 2}, (_, i) =>
+    i < days ? null : +(dailyV1 * (i + 1)).toFixed(2)
+  );
+  const projV2 = Array.from({length: days * 2}, (_, i) =>
+    i < days ? null : +(dailyV2 * (i + 1)).toFixed(2)
+  );
+  const fullCumV1  = [...cumV1,  ...projV1.slice(days)];
+  const fullCumV2  = [...cumV2,  ...projV2.slice(days)];
+  const fullCumSav = [...cumSav, ...projSav.slice(days)];
+
+  // Gradient for the savings gap fill
+  const gradGap = ctx.createLinearGradient(0, 0, 0, 220);
+  gradGap.addColorStop(0, 'rgba(0,229,160,0.22)');
+  gradGap.addColorStop(1, 'rgba(0,229,160,0.04)');
+
+  const gradV1 = ctx.createLinearGradient(0, 0, 0, 220);
+  gradV1.addColorStop(0, 'rgba(255,82,82,0.10)');
+  gradV1.addColorStop(1, 'rgba(255,82,82,0)');
 
   chart2 = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
+      labels: projLabels,
       datasets: [
-        { label: 'Cumulative stale cost (V1)', data: cumV1, borderColor: '#ff5252', backgroundColor: gradL, fill: true, borderWidth: 2, pointRadius: 0, tension: 0.1 },
-        { label: 'Cumulative stale cost (V2)', data: cumV2, borderColor: '#00e5a0', backgroundColor: gradV2, fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.1 },
+        // V1 line — red, faint fill below
+        {
+          label: 'V1 cumulative loss',
+          data: fullCumV1,
+          borderColor: '#ff5252',
+          backgroundColor: gradV1,
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.1,
+          segment: { borderDash: ctx => ctx.p0DataIndex >= days ? [6,3] : [] }
+        },
+        // V2 line — green, fills gap to V1 with green
+        {
+          label: 'V2 cumulative loss',
+          data: fullCumV2,
+          borderColor: '#00e5a0',
+          backgroundColor: gradGap,
+          fill: '-1',         // fill to V1 dataset above = green savings gap
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.1,
+          segment: { borderDash: ctx => ctx.p0DataIndex >= days ? [6,3] : [] }
+        },
+        // Savings line — bright green, hidden from tooltip title
+        {
+          label: 'V2 savings',
+          data: fullCumSav,
+          borderColor: 'rgba(0,229,160,0)',
+          fill: false,
+          borderWidth: 0,
+          pointRadius: 0,
+        },
       ]
     },
     options: {
@@ -514,12 +575,19 @@ function buildChart2() {
       plugins: {
         legend: { display: false },
         tooltip: { ...TT, callbacks: {
-          label: c => ` ${c.dataset.label}: ${fmtUSD(c.parsed.y)}`,
-          title: items => `Day ${items[0].dataIndex + 1}`
+          label: c => {
+            if (c.datasetIndex === 2) return ` 💚 V2 saved: ${fmtUSD(c.parsed.y)} so far`;
+            if (c.datasetIndex === 0) return ` V1 total loss: ${fmtUSD(c.parsed.y)}`;
+            return ` V2 total loss: ${fmtUSD(c.parsed.y)}`;
+          },
+          title: items => {
+            const i = items[0].dataIndex;
+            return i < days ? `Day ${i + 1}` : `Day ${i + 1} (projected)`;
+          }
         }}
       },
       scales: {
-        x: { grid: xG, ticks: { ...xT, maxTicksLimit: 7 } },
+        x: { grid: xG, ticks: { ...xT, maxTicksLimit: 9 } },
         y: { grid: yG, ticks: { ...yT, callback: v => fmtUSD(v) } }
       }
     }
