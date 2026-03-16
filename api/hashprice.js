@@ -1,11 +1,9 @@
 export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
-  // Try CoinGecko first, fall back to Coinbase if throttled
   async function getBTCPrice() {
     const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
     if (!res.ok || res.headers.get('content-type')?.includes('text')) {
-      // Throttled or error — fall back to Coinbase
       const cb = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
       const cbJson = await cb.json();
       return parseFloat(cbJson?.data?.amount) ?? null;
@@ -34,22 +32,27 @@ export default async function handler(req) {
     ? blocks.slice(0, 6).reduce((s, b) => s + (b?.extras?.totalFees ?? 0) / 1e8, 0) / Math.min(blocks.length, 6)
     : 0;
 
-  const SUBSIDY = 3.125;
+  const SUBSIDY  = 3.125;
   const priceUSD = (86400 * (SUBSIDY + avgFeesBTC) * btcPrice * 1e12) / (difficulty * Math.pow(2, 32));
 
   return new Response(JSON.stringify({
     priceUSD,
-    priceBTC: priceUSD / btcPrice,
+    priceBTC:    priceUSD / btcPrice,
+    pricePerPH:  priceUSD * 1000,
     btcPrice,
     difficulty,
     avgFeesBTC,
-    timestamp: new Date().toISOString(),
+    timestamp:   new Date().toISOString(),
+    source:      'stratumv2.com',
+    powered_by:  'dmnd.work — Stratum V2 Bitcoin Mining Pool',
+    docs:        'https://stratumv2.com/api-docs',
   }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Cache-Control': 's-maxage=60',
+      'X-Powered-By': 'stratumv2.com',
     },
   });
 }

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hashprice API — StratumV2.com</title>
+<meta name="description" content="Free, open Bitcoin hashprice API. Real-time $/TH/day and $/PH/day. No key required.">
+<meta property="og:title" content="Hashprice API — StratumV2.com">
+<meta property="og:description" content="Free real-time Bitcoin hashprice API. No signup, no key, no rate limits. Powered by dmnd.work.">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #F0F2F5;
+  --surface: #FFFFFF;
+  --border:  #E2E8F0;
+  --border2: #CBD5E1;
+  --text:    #0F172A;
+  --muted:   #64748B;
+  --green:   #059669;
+  --amber:   #B45309;
+  --blue:    #2563EB;
+  --red:     #DC2626;
+  --code-bg: #F8FAFC;
+  --font:    'IBM Plex Mono', monospace;
+  --display: 'DM Serif Display', serif;
+  --shadow:  0 1px 3px rgba(15,23,42,0.07), 0 4px 16px rgba(15,23,42,0.05);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.6; }
+body::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #B45309, #059669 60%, #2563EB); z-index: 100;
+}
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* NAV */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 48px;
+  flex-wrap: wrap; gap: 12px;
+}
+.nav-logo { font-family: var(--display); font-size: 22px; color: var(--text); text-decoration: none; }
+.nav-logo span { color: var(--green); }
+.nav-links { display: flex; gap: 20px; align-items: center; }
+.nav-links a { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+.nav-links a:hover { color: var(--text); }
+.nav-links a.active { color: var(--text); font-weight: 700; }
+
+/* HERO */
+.hero { margin-bottom: 48px; }
+.hero-eyebrow { font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+.hero-title { font-family: var(--display); font-size: 46px; line-height: 1.1; color: var(--text); margin-bottom: 16px; }
+.hero-title span { color: var(--green); }
+.hero-sub { font-size: 13px; color: var(--muted); max-width: 560px; line-height: 1.7; margin-bottom: 24px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.pill.green { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+.pill.amber { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+
+/* ENDPOINT CARD */
+.endpoint {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow);
+}
+.endpoint-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--border); background: #FAFBFC;
+}
+.method { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 1px; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+.endpoint-url { font-size: 13px; font-weight: 600; color: var(--text); word-break: break-all; }
+.endpoint-body { padding: 20px; }
+.endpoint-desc { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+/* SECTION HEADERS */
+h2 { font-family: var(--display); font-size: 26px; color: var(--text); margin: 48px 0 20px; font-weight: 400; }
+h3 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+/* CODE BLOCKS */
+pre {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 20px; overflow-x: auto; font-size: 12px; line-height: 1.7;
+  margin-bottom: 16px;
+}
+code { font-family: var(--font); }
+.comment { color: #94A3B8; }
+.key { color: var(--blue); }
+.string { color: var(--green); }
+.number { color: var(--amber); }
+
+/* RESPONSE TABLE */
+.resp-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+.resp-table th { text-align: left; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.resp-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.resp-table tr:last-child td { border-bottom: none; }
+.resp-table td:first-child { font-weight: 600; color: var(--blue); white-space: nowrap; }
+.resp-table td:nth-child(2) { color: var(--amber); white-space: nowrap; }
+.resp-table td:nth-child(3) { color: var(--muted); }
+
+/* TRY IT */
+.try-btn {
+  background: var(--text); color: #fff; border: none; border-radius: 6px;
+  padding: 10px 20px; font-family: var(--font); font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; cursor: pointer; transition: opacity 0.15s; margin-right: 8px;
+}
+.try-btn:hover { opacity: 0.85; }
+.try-btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border2); }
+#live-response {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 20px; font-size: 12px; line-height: 1.7; margin-top: 14px;
+  min-height: 60px; display: none; white-space: pre; overflow-x: auto;
+}
+
+/* FOOTER */
+footer {
+  margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  font-size: 10px; color: var(--muted); letter-spacing: 0.5px;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <a href="/" class="nav-logo">STRATUM<span>V2</span>.COM</a>
+    <div class="nav-links">
+      <a href="/">Dashboard</a>
+      <a href="/api-docs" class="active">API</a>
+      <a href="https://dmnd.work" target="_blank">dmnd.work ↗</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">Developer API</div>
+    <h1 class="hero-title">Hashprice API<br><span>Free & Open</span></h1>
+    <p class="hero-sub">Real-time Bitcoin hashprice in USD and BTC per terahash per day. No API key, no signup, no rate limits. Use it in your dashboard, bot, or app.</p>
+    <span class="pill green">✓ No key required</span>&nbsp;
+    <span class="pill amber">⛏ Powered by dmnd.work</span>
+  </div>
+
+  <!-- ENDPOINT -->
+  <h2>Endpoint</h2>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method">GET</span>
+      <span class="endpoint-url">https://stratumv2.com/api/hashprice</span>
+    </div>
+    <div class="endpoint-body">
+      <p class="endpoint-desc">
+        Returns the current Bitcoin hashprice derived from live BTC price, network difficulty, and average block fees.
+        Data is cached for 60 seconds. Sources: CoinGecko (primary), Coinbase (fallback), blockchain.info, mempool.space.
+      </p>
+
+      <h3>Response Fields</h3>
+      <table class="resp-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>priceUSD</td><td>float</td><td>Hashprice in USD per TH per day</td></tr>
+          <tr><td>priceBTC</td><td>float</td><td>Hashprice in BTC per TH per day</td></tr>
+          <tr><td>pricePerPH</td><td>float</td><td>Hashprice in USD per PH per day</td></tr>
+          <tr><td>btcPrice</td><td>float</td><td>Current BTC/USD spot price</td></tr>
+          <tr><td>difficulty</td><td>float</td><td>Current network difficulty</td></tr>
+          <tr><td>avgFeesBTC</td><td>float</td><td>Average block fees over last 6 blocks (BTC)</td></tr>
+          <tr><td>timestamp</td><td>string</td><td>ISO 8601 timestamp of the response</td></tr>
+          <tr><td>source</td><td>string</td><td>"stratumv2.com"</td></tr>
+          <tr><td>powered_by</td><td>string</td><td>"dmnd.work — Stratum V2 Bitcoin Mining Pool"</td></tr>
+          <tr><td>docs</td><td>string</td><td>URL to this page</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Try It</h3>
+      <button class="try-btn" onclick="callAPI()">▶ Run Request</button>
+      <button class="try-btn secondary" onclick="copyURL()">Copy URL</button>
+      <div id="live-response"></div>
+    </div>
+  </div>
+
+  <!-- EXAMPLES -->
+  <h2>Code Examples</h2>
+
+  <h3>JavaScript / Fetch</h3>
+  <pre><code><span class="comment">// Fetch current hashprice</span>
+<span class="key">const</span> res  = <span class="key">await</span> fetch(<span class="string">'https://stratumv2.com/api/hashprice'</span>);
+<span class="key">const</span> data = <span class="key">await</span> res.json();
+
+console.log(<span class="string">`Hashprice: $<span class="key">${data.priceUSD.toFixed(6)}</span>/TH/day`</span>);
+console.log(<span class="string">`Per PH:    $<span class="key">${data.pricePerPH.toFixed(4)}</span>/PH/day`</span>);
+console.log(<span class="string">`BTC:       $<span class="key">${data.btcPrice.toLocaleString()}</span>`</span>);</code></pre>
+
+  <h3>Python</h3>
+  <pre><code><span class="key">import</span> requests
+
+data = requests.get(<span class="string">'https://stratumv2.com/api/hashprice'</span>).json()
+
+<span class="key">print</span>(<span class="string">f"Hashprice: ${data['priceUSD']:.6f}/TH/day"</span>)
+<span class="key">print</span>(<span class="string">f"Per PH:    ${data['pricePerPH']:.4f}/PH/day"</span>)
+<span class="key">print</span>(<span class="string">f"BTC:       ${data['btcPrice']:,.0f}"</span>)</code></pre>
+
+  <h3>cURL</h3>
+  <pre><code>curl https://stratumv2.com/api/hashprice</code></pre>
+
+  <h3>Example Response</h3>
+  <pre><code>{
+  <span class="key">"priceUSD"</span>:    <span class="number">0.0297556299</span>,
+  <span class="key">"priceBTC"</span>:    <span class="number">0.0000004334</span>,
+  <span class="key">"pricePerPH"</span>:  <span class="number">29.7556</span>,
+  <span class="key">"btcPrice"</span>:    <span class="number">68653.00</span>,
+  <span class="key">"difficulty"</span>:  <span class="number">114494789739471</span>,
+  <span class="key">"avgFeesBTC"</span>:  <span class="number">0.000412</span>,
+  <span class="key">"timestamp"</span>:   <span class="string">"2026-03-14T12:00:00.000Z"</span>,
+  <span class="key">"source"</span>:      <span class="string">"stratumv2.com"</span>,
+  <span class="key">"powered_by"</span>:  <span class="string">"dmnd.work — Stratum V2 Bitcoin Mining Pool"</span>,
+  <span class="key">"docs"</span>:        <span class="string">"https://stratumv2.com/api-docs"</span>
+}</code></pre>
+
+  <!-- FORMULA -->
+  <h2>How Hashprice is Calculated</h2>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;box-shadow:var(--shadow);margin-bottom:16px">
+    <p style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px">
+      Hashprice represents the expected daily revenue per terahash of mining power, before electricity costs.
+    </p>
+    <pre style="margin-bottom:12px"><code><span class="comment">// Standard hashprice formula</span>
+priceUSD = (86400 × (subsidy + avgFees) × btcPrice × 10¹²)
+           ÷ (difficulty × 2³²)
+
+<span class="comment">// Where:</span>
+<span class="comment">//   86400      = seconds per day</span>
+<span class="comment">//   subsidy    = 3.125 BTC (post-halving block reward)</span>
+<span class="comment">//   avgFees    = average fees per block over last 6 blocks</span>
+<span class="comment">//   10¹²       = TH/s to H/s conversion</span>
+<span class="comment">//   2³²        = difficulty target constant</span></code></pre>
+    <p style="font-size:11px;color:var(--muted)">Data refreshes every 60 seconds. BTC price sourced from CoinGecko with Coinbase fallback.</p>
+  </div>
+
+  <!-- ATTRIBUTION -->
+  <h2>Attribution</h2>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;box-shadow:var(--shadow)">
+    <p style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px">
+      This API is free to use. If you use it in a public project, a mention is appreciated — add a <code style="background:var(--code-bg);padding:2px 6px;border-radius:3px;border:1px solid var(--border)">powered_by</code> credit linking to <a href="https://stratumv2.com" style="color:var(--blue)">stratumv2.com</a> or <a href="https://dmnd.work" style="color:var(--blue)">dmnd.work</a>.
+    </p>
+    <pre><code><span class="comment">&lt;!-- Suggested attribution --&gt;</span>
+Hashprice data by &lt;a href="https://stratumv2.com"&gt;stratumv2.com&lt;/a&gt;
+Powered by &lt;a href="https://dmnd.work"&gt;dmnd.work&lt;/a&gt; — Stratum V2 Mining Pool</code></pre>
+  </div>
+
+  <footer>
+    <div>
+      <a href="/">stratumv2.com</a> &nbsp;·&nbsp;
+      <a href="https://dmnd.work" target="_blank">dmnd.work</a> &nbsp;·&nbsp;
+      <a href="https://github.com/AlejandroDeLaTorre/stratumv2.com" target="_blank">GitHub</a> &nbsp;·&nbsp;
+      <a href="https://t.me/sv2profitability" target="_blank">Telegram</a>
+    </div>
+    <div>Free & open · No key required · Cached 60s</div>
+  </footer>
+
+</div>
+
+<script>
+async function callAPI() {
+  const el = document.getElementById('live-response');
+  el.style.display = 'block';
+  el.textContent = 'Loading...';
+  try {
+    const res  = await fetch('https://stratumv2.com/api/hashprice');
+    const data = await res.json();
+    el.textContent = JSON.stringify(data, null, 2);
+  } catch(e) {
+    el.textContent = 'Error: ' + e.message;
+  }
+}
+
+function copyURL() {
+  navigator.clipboard.writeText('https://stratumv2.com/api/hashprice').then(() => {
+    const btn = document.querySelector('.try-btn.secondary');
+    btn.textContent = 'Copied ✓';
+    setTimeout(() => btn.textContent = 'Copy URL', 2000);
+  });
+}
+</script>
+</body>
+</html>
