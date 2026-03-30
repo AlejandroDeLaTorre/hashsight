@@ -1,4 +1,4 @@
-name: Telegram Hashprice Bot
+name: Telegram Weekly Recap
 
 on:
   schedule:
@@ -6,22 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  snapshot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Save hashprice snapshot to database
-        run: |
-          curl -s -X GET https://stratumv2.com/api/snapshot \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-
-      - name: Check for difficulty adjustment
-        run: |
-          curl -s -X GET https://stratumv2.com/api/difficulty-alert \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-
   weekly-recap:
     runs-on: ubuntu-latest
-    needs: snapshot
     steps:
       - name: Post weekly recap to Telegram
         run: |
