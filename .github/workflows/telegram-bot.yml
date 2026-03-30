@@ -2,7 +2,7 @@ name: Telegram Hashprice Bot
 
 on:
   schedule:
-    - cron: '0 9 * * *'     # runs daily at 09:00 UTC
+    - cron: '0 9 * * 1'     # Monday 09:00 UTC only
   workflow_dispatch:
 
 jobs:
@@ -23,14 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: snapshot
     steps:
-      - name: Post weekly recap on Mondays only
+      - name: Post weekly recap to Telegram
         run: |
-          DAY=$(date +%u)  # 1=Monday ... 7=Sunday
-          if [ "$DAY" = "1" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "Monday or manual trigger — posting recap"
-            RESPONSE=$(curl -s -X GET https://stratumv2.com/api/cron \
-              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
-            echo "API Response: $RESPONSE"
-          else
-            echo "Not Monday (day=$DAY) — skipping Telegram post"
-          fi
+          RESPONSE=$(curl -s -X GET https://stratumv2.com/api/cron \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "API Response: $RESPONSE"
