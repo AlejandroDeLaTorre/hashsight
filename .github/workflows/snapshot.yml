@@ -1,0 +1,20 @@
+name: Hashprice Snapshot
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours — silent
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save hashprice snapshot to database
+        run: |
+          curl -s -X GET https://stratumv2.com/api/snapshot \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+      - name: Check for difficulty adjustment
+        run: |
+          curl -s -X GET https://stratumv2.com/api/difficulty-alert \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
