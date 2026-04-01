@@ -2,8 +2,5 @@
   "rewrites": [
     { "source": "/stratum", "destination": "/stratum-v2-cycles.html" },
     { "source": "/api-docs", "destination": "/api-docs.html" }
-  ],
-  "crons": [
-    { "path": "/api/cron", "schedule": "0 12 * * *" }
   ]
 }
